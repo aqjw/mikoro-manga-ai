@@ -36,8 +36,8 @@ def update_task_status(task_id, status):
 
     # Определяем путь и ключ файла по статусу
     file_info = {
-        "processing": ("mask.png", "mask"),
-        "completed": ("result.png", "result")
+        "mask_completed": ("mask.png", "mask"),
+        "cleaner_completed": ("result.png", "result")
     }.get(status)
 
     # Условно задаем `file_path` и `file_key`
@@ -79,7 +79,6 @@ def generate_mask(task_id):
 
     # Обновляем статус задачи в базе данных
     update_task_status(task_id, "mask_completed")
-
 
     # Запуск задачи для применения маски к изображению
     apply_mask.send(task_id)
