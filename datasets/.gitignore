@@ -1,0 +1,6 @@
+*
+!test/
+!train/
+!train_voc/
+labels.txt
+!.gitignore

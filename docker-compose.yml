@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5310:5310"
+    env_file:
+      - .env
+    volumes:
+      - .:/workspace
+    depends_on:
+      - redis
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+
+  dramatiq:
+    build: .
+    command: dramatiq task_proxy
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - .:/workspace
