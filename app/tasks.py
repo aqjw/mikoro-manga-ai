@@ -14,12 +14,15 @@ import requests
 
 load_dotenv()
 
-# Настройка брокера Redis для Dramatiq
-broker = RedisBroker(url="redis://redis:6379")
-dramatiq.set_broker(broker)
-
 # Локальная директория для хранения файлов
 local_storage_path = os.getenv('LOCAL_STORAGE_PATH')
+redis_host = os.getenv('REDIS_HOST')
+
+
+# Настройка брокера Redis для Dramatiq
+broker = RedisBroker(url=f"redis://{redis_host}:6379")
+dramatiq.set_broker(broker)
+
 
 # Инициализация базы данных
 init_db()

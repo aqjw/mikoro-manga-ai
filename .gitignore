@@ -4,3 +4,4 @@
 .ipynb_checkpoints
 instance
 __pychache__
+database.db
