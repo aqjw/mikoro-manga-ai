@@ -11,11 +11,15 @@ services:
       - .:/workspace
     depends_on:
       - redis
+    extra_hosts:
+      - "bubble-killer.site:139.59.133.179"
 
   redis:
     image: "redis:alpine"
     ports:
       - "6379:6379"
+    extra_hosts:
+      - "bubble-killer.site:139.59.133.179"
 
   dramatiq:
     build: .
@@ -26,3 +30,5 @@ services:
       - .env
     volumes:
       - .:/workspace
+    extra_hosts:
+      - "bubble-killer.site:139.59.133.179"
