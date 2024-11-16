@@ -24,6 +24,7 @@ local_storage_path = os.getenv('LOCAL_STORAGE_PATH', '/workspace/storage')
 broker = RedisBroker(url=f"redis://{redis_host}:6379")
 set_broker(broker)
 
+
 @dramatiq.actor(max_retries=3)
 def generate_mask(task_id):
     logging.info("Starting generate_mask task")
