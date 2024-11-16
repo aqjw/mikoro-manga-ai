@@ -19,8 +19,9 @@ services:
 
   dramatiq:
     build: .
-    command: dramatiq --processes=1 worker
+#    command: dramatiq --processes=1 worker
 #    command: dramatiq --threads=1 --processes=1 app.tasks
+    command: dramatiq --processes=1 app.tasks
     depends_on:
       - redis
     env_file:

@@ -2,6 +2,7 @@
 import os
 import logging
 import dramatiq
+from dramatiq import set_broker
 from dramatiq.brokers.redis import RedisBroker
 from app.lama import clean_image_with_lama
 from app.dalle import clean_image_with_dalle
@@ -21,7 +22,7 @@ local_storage_path = os.getenv('LOCAL_STORAGE_PATH', '/workspace/storage')
 
 # Настройка брокера Redis для Dramatiq
 broker = RedisBroker(url=f"redis://{redis_host}:6379")
-
+set_broker(broker)
 
 @dramatiq.actor(max_retries=3)
 def generate_mask(task_id):

@@ -10,7 +10,6 @@ from app.tasks import generate_mask
 load_dotenv()
 
 local_storage_path = os.getenv('LOCAL_STORAGE_PATH')
-redis_prefix = os.getenv('REDIS_PREFIX')
 
 # Initialize Flask app
 app = Flask(__name__)
