@@ -19,10 +19,14 @@ services:
 
   dramatiq:
     build: .
-    command: dramatiq task_proxy --threads 4
+    command: dramatiq task_proxy
     depends_on:
       - redis
     env_file:
       - .env
     volumes:
       - .:/workspace
+    deploy:
+      resources:
+        limits:
+          cpus: "0.8"
