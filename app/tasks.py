@@ -1,8 +1,7 @@
 # tasks.py
+
 import os
 import logging
-import dramatiq
-from dramatiq.brokers.redis import RedisBroker
 from app.lama import clean_image_with_lama
 from app.dalle import clean_image_with_dalle
 from model import model_singleton
@@ -11,21 +10,25 @@ from PIL import ImageOps
 from dotenv import load_dotenv
 from app.database import init_db, get_task
 import requests
+import redis
+from rq import Queue
 
+# Загрузка переменных окружения
 load_dotenv()
 
-# Локальная директория для хранения файлов
-local_storage_path = os.getenv('LOCAL_STORAGE_PATH')
-redis_host = os.getenv('REDIS_HOST')
+# Настройка воркера
+redis_host = os.getenv('REDIS_HOST', 'localhost')
+local_storage_path = os.getenv('LOCAL_STORAGE_PATH', '/workspace/storage')
 
+# Подключение к Redis
+redis_conn = redis.Redis(host=redis_host, port=6379, db=0)
 
-# Настройка брокера Redis для Dramatiq
-broker = RedisBroker(url=f"redis://{redis_host}:6379")
-dramatiq.set_broker(broker)
-
+# Очередь RQ
+queue = Queue(connection=redis_conn)
 
 # Инициализация базы данных
 init_db()
+
 
 
 def update_task_status(task_id, status):
@@ -64,7 +67,6 @@ def update_task_status(task_id, status):
                 files[file_key].close()  # Закрываем файл, если он был открыт
 
 
-@dramatiq.actor
 def generate_mask(task_id):
     logging.info("Starting generate_mask task")
     update_task_status(task_id, "mask_starting")
@@ -84,10 +86,9 @@ def generate_mask(task_id):
     update_task_status(task_id, "mask_completed")
 
     # Запуск задачи для применения маски к изображению
-    apply_mask.send(task_id)
+    queue.enqueue(apply_mask, task_id)
 
 
-@dramatiq.actor
 def apply_mask(task_id):
     logging.info("Starting apply_mask task")
     update_task_status(task_id, "cleaner_starting")
@@ -119,4 +120,3 @@ def apply_mask(task_id):
 
     # Обновляем статус задачи в базе данных
     update_task_status(task_id, "cleaner_completed")
-

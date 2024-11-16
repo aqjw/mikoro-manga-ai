@@ -17,16 +17,10 @@ services:
     ports:
       - "6379:6379"
 
-  dramatiq:
+  rq-worker:
     build: .
-    command: dramatiq task_proxy --threads=4
+    command: rq worker
     depends_on:
       - redis
-    env_file:
-      - .env
     volumes:
       - .:/workspace
-    deploy:
-      resources:
-        limits:
-          cpus: "0.9"

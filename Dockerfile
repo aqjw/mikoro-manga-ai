@@ -9,11 +9,9 @@ WORKDIR /workspace
 # 3. Устанавливаем системные зависимости для OpenCV
 RUN apt-get update && apt-get install -y libgl1-mesa-glx
 
-RUN pip install dramatiq redis
-
 # 4. Копируем файл зависимостей и устанавливаем их
 COPY requirements.txt .
-RUN pip install  -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # 5. Копируем код приложения в контейнер
 COPY . .

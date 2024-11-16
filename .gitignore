@@ -3,5 +3,5 @@
 .idea
 .ipynb_checkpoints
 instance
-__pychache__
+__pycache__
 database.db
