@@ -5,7 +5,7 @@ import os
 from PIL import Image
 from app.database import init_db, create_task
 from dotenv import load_dotenv
-from app.tasks import generate_mask, queue
+from app.tasks import generate_mask
 
 load_dotenv()
 
@@ -54,11 +54,8 @@ def process_upload_and_queue(image_url, model_name, webhook_url, task_id):
     # Создаем задачу в базе данных
     create_task(task_id, model_name, webhook_url)
 
-    # Отправка задачи в очередь
-    job = queue.enqueue(generate_mask, task_id)
-
-    # Информация о задаче
-    print(f"Task enqueued: {job.id}")
+    # Запуск задачи в очереди
+    generate_mask.send(task_id)
 
     return True
 

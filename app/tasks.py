@@ -1,7 +1,8 @@
 # tasks.py
-
 import os
 import logging
+import dramatiq
+from dramatiq.brokers.redis import RedisBroker
 from app.lama import clean_image_with_lama
 from app.dalle import clean_image_with_dalle
 from model import model_singleton
@@ -10,8 +11,6 @@ from PIL import ImageOps
 from dotenv import load_dotenv
 from app.database import init_db, get_task
 import requests
-import redis
-from rq import Queue
 
 # Загрузка переменных окружения
 load_dotenv()
@@ -20,53 +19,11 @@ load_dotenv()
 redis_host = os.getenv('REDIS_HOST', 'localhost')
 local_storage_path = os.getenv('LOCAL_STORAGE_PATH', '/workspace/storage')
 
-# Подключение к Redis
-redis_conn = redis.Redis(host=redis_host, port=6379, db=0)
-
-# Очередь RQ
-queue = Queue(connection=redis_conn)
-
-# Инициализация базы данных
-init_db()
+# Настройка брокера Redis для Dramatiq
+broker = RedisBroker(url=f"redis://{redis_host}:6379")
 
 
-
-def update_task_status(task_id, status):
-    data = {"task_id": task_id, "status": status}
-
-    # Получаем данные задачи и проверяем существование
-    task = get_task(task_id)
-    if not task:
-        logging.error(f"Task with ID {task_id} not found.")
-        return
-
-    # Определяем путь и ключ файла по статусу
-    file_info = {
-        "mask_completed": ("mask.png", "mask"),
-        "cleaner_completed": ("result.png", "result")
-    }.get(status)
-
-    # Условно задаем `file_path` и `file_key`
-    file_path, file_key = (os.path.join(local_storage_path, f"{task_id}/{file_info[0]}"),
-                           file_info[1]) if file_info else (None, None)
-
-    # Отправка вебхука
-    if task.webhook:
-        # Инициализация переменной files
-        files = None
-
-        try:
-            files = {file_key: open(file_path, 'rb')} if file_path and os.path.exists(file_path) else None
-            response = requests.post(task.webhook, data=data, files=files, json=None if files else data)
-            response.raise_for_status()
-            logging.info(f"Webhook sent successfully for task {task_id} with status {status}")
-        except requests.RequestException as e:
-            logging.error(f"Failed to send webhook for task {task_id}: {e}")
-        finally:
-            if files:
-                files[file_key].close()  # Закрываем файл, если он был открыт
-
-
+@dramatiq.actor(max_retries=3)
 def generate_mask(task_id):
     logging.info("Starting generate_mask task")
     update_task_status(task_id, "mask_starting")
@@ -86,9 +43,10 @@ def generate_mask(task_id):
     update_task_status(task_id, "mask_completed")
 
     # Запуск задачи для применения маски к изображению
-    queue.enqueue(apply_mask, task_id)
+    apply_mask.send(task_id)
 
 
+@dramatiq.actor(max_retries=3)
 def apply_mask(task_id):
     logging.info("Starting apply_mask task")
     update_task_status(task_id, "cleaner_starting")
@@ -120,3 +78,33 @@ def apply_mask(task_id):
 
     # Обновляем статус задачи в базе данных
     update_task_status(task_id, "cleaner_completed")
+
+
+def update_task_status(task_id, status):
+    task = get_task(task_id)
+    if not task:
+        logging.error(f"Task with ID {task_id} not found.")
+        return
+
+    # Статус задачи
+    file_key_map = {"mask_completed": "mask", "cleaner_completed": "result"}
+    file_key = file_key_map.get(status)
+    file_path = os.path.join(local_storage_path, f"{task_id}/{file_key}.png") if file_key else None
+
+    # Отправка вебхука
+    if task.webhook:
+        files = {file_key: open(file_path, 'rb')} if file_path and os.path.exists(file_path) else None
+        try:
+            response = requests.post(task.webhook, data={"task_id": task_id, "status": status}, files=files)
+            response.raise_for_status()
+            logging.info(f"Webhook for task {task_id} sent successfully.")
+        except requests.RequestException as e:
+            logging.error(f"Error sending webhook for task {task_id}: {e}")
+        finally:
+            if files:
+                files[file_key].close()
+
+
+if __name__ == "__main__":
+    # Инициализация базы данных
+    init_db()

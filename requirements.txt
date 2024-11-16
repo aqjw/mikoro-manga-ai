@@ -30,4 +30,4 @@ yacs==0.1.8
 flask
 sqlalchemy
 redis
-rq
+dramatiq

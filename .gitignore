@@ -4,4 +4,6 @@
 .ipynb_checkpoints
 instance
 __pycache__
+**/__pycache__/
 database.db
+* .pyc

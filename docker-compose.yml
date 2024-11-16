@@ -17,10 +17,13 @@ services:
     ports:
       - "6379:6379"
 
-  rq-worker:
+  dramatiq:
     build: .
-    command: rq worker
+    command: dramatiq --processes=1 worker
+#    command: dramatiq --threads=1 --processes=1 app.tasks
     depends_on:
       - redis
+    env_file:
+      - .env
     volumes:
       - .:/workspace
