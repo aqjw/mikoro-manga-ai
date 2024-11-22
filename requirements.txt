@@ -27,10 +27,10 @@ transformers==4.27.4
 typer==0.12.3
 uvicorn==0.29.0
 yacs==0.1.8
-Flask
-Werkzeug>=2.2.2
+lama-cleaner>=1.2.2
+werkzeug
 sqlalchemy
 redis
 dramatiq
-lama-cleaner>=1.2.2
 ultralytics
+flask
