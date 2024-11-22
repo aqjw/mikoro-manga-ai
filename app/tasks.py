@@ -6,8 +6,7 @@ from dramatiq import set_broker
 from dramatiq.brokers.redis import RedisBroker
 from app.lama import clean_image_with_lama
 from app.dalle import clean_image_with_dalle
-from model import model_singleton
-from app.predict import train_predict
+from app.predict import predict
 from PIL import ImageOps
 from dotenv import load_dotenv
 from app.database import init_db, get_task
@@ -35,7 +34,7 @@ def generate_mask(task_id):
     mask_path = os.path.join(local_storage_path, f"{task_id}/mask.png")
 
     # Генерация маски и инверсия
-    mask = train_predict(model_singleton(), image_path)
+    mask = predict(image_path)
     mask_image = mask.convert('L')
     inverted_mask = ImageOps.invert(mask_image)
     inverted_mask.save(mask_path, format="PNG", optimize=True)
@@ -74,9 +73,6 @@ def apply_mask(task_id):
     #     logging.error(f"Unknown model name '{task.model_name}' for task ID {task_id}.")
     #     update_task_status(task_id, "FAILED")
     #     return
-
-    # Путь к результату
-    result_path = f"{local_storage_path}/{task_id}/result.png"
 
     # Обновляем статус задачи в базе данных
     update_task_status(task_id, "cleaner_completed")
