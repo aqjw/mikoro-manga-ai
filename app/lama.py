@@ -19,8 +19,8 @@ def clean_image_with_lama(image_path, mask_path, task):
     model = ModelManager(
         # lama,ldm,zits,mat,fcf,sd1.5,anything4,realisticVision1.4,cv2,manga,sd2,paint_by_example,instruct_pix2pix
         name=task.model_name,
-        # sd_controlnet=False,
-        # sd_controlnet_method='control_v11p_sd15_canny',
+        sd_controlnet=False,
+        sd_controlnet_method='control_v11p_sd15_canny',
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
         no_half=False,
         hf_access_token=None,
