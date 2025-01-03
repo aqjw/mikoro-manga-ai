@@ -8,17 +8,12 @@ import random
 from PIL import Image
 import numpy as np
 import torch
-from dotenv import load_dotenv
-
-load_dotenv()
-
-local_storage_path = os.getenv('LOCAL_STORAGE_PATH')
 
 
-def clean_image_with_lama(image_path, mask_path, task):
+def clean_image(image, mask):
     model = ModelManager(
         # lama,ldm,zits,mat,fcf,sd1.5,anything4,realisticVision1.4,cv2,manga,sd2,paint_by_example,instruct_pix2pix
-        name=task.model_name,
+        name='lama',
         sd_controlnet=False,
         sd_controlnet_method='control_v11p_sd15_canny',
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
@@ -37,8 +32,6 @@ def clean_image_with_lama(image_path, mask_path, task):
     # print('model',model)
 
     # RGB
-    image = np.array(Image.open(image_path).convert("RGB"))
-    mask = np.array(Image.open(mask_path).convert("L"))
     mask = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)[1]
 
     # reverse mask
@@ -140,9 +133,4 @@ def clean_image_with_lama(image_path, mask_path, task):
 
     res_np_img = cv2.cvtColor(res_np_img.astype(np.uint8), cv2.COLOR_BGR2RGB)
 
-    # Загрузка результата
-    result_image = Image.fromarray(res_np_img)
-
-    # Сохранение обработанного изображения временно
-    result_path = f"{local_storage_path}/{task.id}/result.png"
-    result_image.save(result_path)
+    return res_np_img

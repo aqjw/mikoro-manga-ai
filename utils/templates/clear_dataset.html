@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .image-container {
+            position: relative;
+            border: 1px solid;
+            width: 300px;
+            height: 600px;
+        }
+        .image-container img {
+            width: 100%;
+            height: auto;
+            max-height: 600px;
+            display: block;
+        }
+        .delete-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .pagination a {
+            text-decoration: none;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            color: #007BFF;
+        }
+        .pagination a.active {
+            font-weight: bold;
+            background-color: #007BFF;
+            color: white;
+        }
+        .img-title {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #000;
+            color: #fff;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Gallery ({{ total_images }})</h1>
+    <div class="gallery" id="gallery">
+        {% for image in images %}
+        <div class="image-container" id="container-{{ image }}">
+            <a href="{{ url_for('get_image', filename=image) }}" target="_blank">
+                <img src="{{ url_for('get_image', filename=image) }}" alt="{{ image }}">
+            </a>
+            <div class="delete-button" onclick="deleteImage('{{ image }}')">x</div>
+            <div class="img-title">{{ image }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="pagination">
+        {% for p in range(1, total_pages + 1) %}
+        <a href="?page={{ p }}" class="{{ 'active' if p == page else '' }}">{{ p }}</a>
+        {% endfor %}
+    </div>
+    <script>
+        function deleteImage(filename) {
+            fetch(`/delete/${filename}`, { method: "POST" })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Удалить контейнер изображения
+                        const container = document.getElementById(`container-${filename}`);
+                        container.remove();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => {
+                    alert("Error deleting image: " + err);
+                });
+            return false
+        }
+    </script>
+</body>
+</html>
